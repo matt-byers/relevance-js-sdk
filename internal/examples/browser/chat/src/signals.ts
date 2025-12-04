@@ -5,11 +5,13 @@ import {
   type Client,
   type Task,
   type UserMessage,
+  Workforce,
 } from "@relevanceai/sdk";
-import { AGENT_ID } from "@/constant";
+import { AGENT_ID, WORKFORCE_ID } from "@/constant";
 
 export const client = signal<Client>();
 export const agent = signal<Agent>();
+export const workforce = signal<Workforce>();
 export const task = signal<Task>();
 export const messages = signal<(AgentMessage | UserMessage)[]>([]);
 export const isAgentTyping = signal(false);
@@ -20,7 +22,8 @@ export const isDarkMode = signal(
       : window.matchMedia("(prefers-color-scheme: dark)").matches),
 );
 
-export const agentName = computed(() => agent.value?.name);
+export const subject = computed(() => workforce.value ?? agent.value);
+export const agentName = computed(() => subject.value?.name);
 export const agentInitials = computed(() =>
   agentName.value
     ?.split(/\W+/)
@@ -28,8 +31,8 @@ export const agentInitials = computed(() =>
     .map((s) => s.toLocaleUpperCase().charAt(0))
     .join(""),
 );
-export const agentAvatar = computed(() => agent.value?.avatar);
-export const agentDescription = computed(() => agent.value?.description);
+export const agentAvatar = computed(() => (agent.value as Agent)?.avatar);
+export const agentDescription = computed(() => (agent.value as Agent)?.description);
 
 // Persist dark mode preference
 effect(() => {
@@ -43,9 +46,15 @@ effect(() => {
 
 effect(() => {
   if (client.value) {
-    Agent.get(AGENT_ID, client.value).then((a) => {
-      agent.value = a;
-    });
+    if (WORKFORCE_ID) {
+      Workforce.get(WORKFORCE_ID, client.value).then((wf) => {
+        workforce.value = wf;
+      });
+    } else {
+      Agent.get(AGENT_ID, client.value).then((a) => {
+        agent.value = a;
+      });
+    }
   }
 });
 
