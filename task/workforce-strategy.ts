@@ -25,6 +25,7 @@ import {
 
 export type WorkforceTaskState =
   | "running"
+  | "continue"
   | "completed"
   | "execution-limit-reached"
   | "pending-approval"
@@ -40,6 +41,7 @@ export type WorkforceTaskState =
 export function stateToStatus(state: WorkforceTaskState): TaskStatus {
   switch (state) {
     case "running":
+    case "continue":
       return "running";
 
     case "completed":
