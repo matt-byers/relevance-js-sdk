@@ -1,6 +1,6 @@
 import * as Avatar from "@radix-ui/react-avatar";
 import { Moon, Sun } from "lucide-react";
-import { agentAvatar, agentInitials, agentName, isDarkMode } from "@/signals";
+import { subjectAvatar, subjectInitials, subjectName, isDarkMode } from "@/signals";
 
 export function Header() {
   const toggleDarkMode = () => {
@@ -13,18 +13,18 @@ export function Header() {
         <div class="flex items-center gap-x-2.5">
           <Avatar.Root>
             <Avatar.Image
-              src={agentAvatar}
+              src={subjectAvatar}
               class="size-10 rounded-full border border-zinc-200 dark:border-zinc-700 transition-colors"
-              alt={agentName}
+              alt={subjectName}
             />
-            <Avatar.Fallback>{agentInitials}</Avatar.Fallback>
+            <Avatar.Fallback>{subjectInitials}</Avatar.Fallback>
           </Avatar.Root>
           <hgroup class="flex flex-col flex-1 gap-y-1">
             <h1 class="font-medium text-md leading-none text-zinc-800 dark:text-white transition-colors">
               Task title
             </h1>
             <h2 class="text-xs text-zinc-500 dark:text-zinc-400 leading-none">
-              {agentName}
+              {subjectName}
             </h2>
           </hgroup>
           <button

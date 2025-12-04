@@ -1,25 +1,40 @@
 import { Client, Key } from "@relevanceai/sdk";
-import { AGENT_ID, PROJECT, REGION } from "@/constant";
+import { AGENT_ID, API_KEY, PROJECT, REGION, WORKFORCE_ID } from "@/constant";
 import { client } from "@/signals";
 
-Promise.resolve(tryStoredEmbedKey())
-  .then((key) => key ?? generateEmbedKey())
-  .then((key) => {
-    client.value = new Client(key);
-  });
-
-async function generateEmbedKey() {
-  const key = await Key.generateEmbedKey({
+if (API_KEY) {
+  const key = new Key({
+    key: API_KEY,
     region: REGION,
     project: PROJECT,
-    agentId: AGENT_ID,
   });
+  client.value = new Client(key);
+} else {
+  const subjectId = WORKFORCE_ID || AGENT_ID;
+  const options = WORKFORCE_ID
+    ? { region: REGION, project: PROJECT, workforceId: WORKFORCE_ID }
+    : { region: REGION, project: PROJECT, agentId: AGENT_ID };
 
+  Promise.resolve(tryStoredEmbedKey(subjectId))
+    .then((key) => key ?? generateEmbedKey(options))
+    .then((key) => {
+      client.value = new Client(key);
+    });
+}
+
+async function generateEmbedKey(
+  options:
+    | { region: typeof REGION; project: string; agentId: string }
+    | { region: typeof REGION; project: string; workforceId: string },
+) {
+  const key = await Key.generateEmbedKey(options);
   const { key: embedKey, taskPrefix } = key.toJSON();
+  const subjectId = "agentId" in options ? options.agentId : options.workforceId;
+
   localStorage.setItem(
-    `r-${AGENT_ID}`,
+    `r-${subjectId}`,
     JSON.stringify({
-      embedKey: embedKey,
+      embedKey,
       conversationPrefix: taskPrefix,
     }),
   );
@@ -27,16 +42,18 @@ async function generateEmbedKey() {
   return key;
 }
 
-function tryStoredEmbedKey() {
+function tryStoredEmbedKey(subjectId: string) {
   try {
-    const stored = JSON.parse(localStorage.getItem(`r-${AGENT_ID}`));
+    const stored = JSON.parse(localStorage.getItem(`r-${subjectId}`) || "{}");
 
     if (stored.embedKey && stored.conversationPrefix) {
       return new Key({
         key: stored.embedKey,
         region: REGION,
         project: PROJECT,
-        agentId: AGENT_ID,
+        ...(WORKFORCE_ID
+          ? { workforceId: WORKFORCE_ID }
+          : { agentId: AGENT_ID }),
         taskPrefix: stored.conversationPrefix,
       });
     }
